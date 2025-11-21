@@ -89,9 +89,18 @@ uint8_t OpenMV_IsConnected(void);
 // 发送命令
 void OpenMV_SendCommand(uint8_t cmd, uint8_t *data, uint8_t len);
 
+// 模式切换命令
+#define OPENMV_MODE_LANE_FOLLOW     0x10
+#define OPENMV_MODE_ARROW_DETECT    0x11
+#define OPENMV_MODE_COLOR_DETECT    0x12
+#define OPENMV_MODE_TARGET_FIND     0x13
+
+void OpenMV_SetMode(uint8_t mode);
+
 // 获取数据
 int16_t OpenMV_GetLaneOffset(void);
 Arrow_Direction OpenMV_GetArrow(void);
 uint8_t OpenMV_IsStopLine(void);
+Detect_Color OpenMV_GetColor(void);
 
 #endif /* __OPENMV_COMM_H */

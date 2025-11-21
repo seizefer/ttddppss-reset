@@ -231,3 +231,22 @@ uint8_t OpenMV_IsStopLine(void)
 {
     return OpenMV_Data.stop_line_detected;
 }
+
+/**
+ * @brief 设置OpenMV工作模式
+ */
+void OpenMV_SetMode(uint8_t mode)
+{
+    HAL_UART_Transmit(&huart2, &mode, 1, 100);
+}
+
+/**
+ * @brief 获取检测到的颜色
+ */
+Detect_Color OpenMV_GetColor(void)
+{
+    if (OpenMV_Data.color_valid) {
+        return OpenMV_Data.color;
+    }
+    return COLOR_NONE;
+}

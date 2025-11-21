@@ -327,15 +327,40 @@ static void Task_Process(void)
  */
 static void Task_Patio1_LaneFollow(void)
 {
-    // 检查是否到达桥梁
-    if (OpenMV_IsStopLine()) {
-        Lane_Stop();
-        g_task_state = TASK_P1_BRIDGE;
-        return;
-    }
+    static uint8_t lane_phase = 0;
+    static uint32_t phase_timer = 0;
 
-    // 执行车道跟踪
-    Lane_Process();
+    switch (lane_phase) {
+        case 0: // 初始化
+            OpenMV_SetMode(OPENMV_MODE_LANE_FOLLOW);
+            Lane_SetBaseSpeed(3000);
+            Lane_Start();
+            phase_timer = HAL_GetTick();
+            lane_phase = 1;
+            Debug_Print("Task1: Lane Follow Start\r\n");
+            break;
+
+        case 1: // 车道跟踪
+            Lane_Process();
+
+            // 检查是否到达桥梁（停止线）
+            if (OpenMV_IsStopLine() && OpenMV_Data.stop_line_distance < 50) {
+                Lane_Stop();
+                lane_phase = 2;
+            }
+
+            // 超时保护 (30秒)
+            if (HAL_GetTick() - phase_timer > 30000) {
+                lane_phase = 2;
+            }
+            break;
+
+        case 2: // 完成，切换到下一任务
+            lane_phase = 0;
+            g_task_state = TASK_P1_BRIDGE;
+            Debug_Print("Task1: Complete\r\n");
+            break;
+    }
 }
 
 /**
@@ -344,24 +369,45 @@ static void Task_Patio1_LaneFollow(void)
 static void Task_Patio1_Bridge(void)
 {
     static uint8_t bridge_phase = 0;
+    static uint32_t phase_timer = 0;
 
     switch (bridge_phase) {
-        case 0: // 上坡
-            Motor_GoStraight(4000);
-            // TODO: 检测桥面
+        case 0: // 初始化
+            phase_timer = HAL_GetTick();
+            bridge_phase = 1;
+            Debug_Print("Task2: Bridge Start\r\n");
             break;
 
-        case 1: // 桥面（金属网）
-            Motor_GoStraight(3000);
+        case 1: // 上坡 (加速爬坡)
+            Motor_GoStraight(5000);
+            // 检测倾斜角度或编码器判断上坡完成
+            if (HAL_GetTick() - phase_timer > 2000) {
+                bridge_phase = 2;
+                phase_timer = HAL_GetTick();
+            }
             break;
 
-        case 2: // 下坡
-            Motor_GoStraight(2000);
+        case 2: // 桥面 (金属网，稳定速度)
+            Motor_GoStraight(3500);
+            // 金属网面需要稳定牵引力
+            if (HAL_GetTick() - phase_timer > 3000) {
+                bridge_phase = 3;
+                phase_timer = HAL_GetTick();
+            }
             break;
 
-        case 3: // 完成
+        case 3: // 下坡 (减速)
+            Motor_GoStraight(2500);
+            if (HAL_GetTick() - phase_timer > 2000) {
+                bridge_phase = 4;
+            }
+            break;
+
+        case 4: // 完成
+            Motor_Stop_ms(500);
             bridge_phase = 0;
             g_task_state = TASK_P1_GATE;
+            Debug_Print("Task2: Complete\r\n");
             break;
     }
 }
@@ -371,19 +417,69 @@ static void Task_Patio1_Bridge(void)
  */
 static void Task_Patio1_Gate(void)
 {
-    // 检测门框并对准
-    if (OpenMV_Data.target_valid) {
-        int16_t offset = OpenMV_Data.target_x - 160;
-        int16_t turn = offset / 3;
-        Motor_Turn(2500, turn);
-    } else {
-        Motor_GoStraight(2000);
-    }
+    static uint8_t gate_phase = 0;
+    static uint32_t phase_timer = 0;
+    static uint32_t align_timer = 0;
 
-    // 检测红线停止
-    if (OpenMV_Data.color == COLOR_RED && OpenMV_Data.color_valid) {
-        Motor_Stop();
-        g_task_state = TASK_STATE_DONE;
+    switch (gate_phase) {
+        case 0: // 初始化，切换到目标检测模式
+            OpenMV_SetMode(OPENMV_MODE_TARGET_FIND);
+            phase_timer = HAL_GetTick();
+            gate_phase = 1;
+            Debug_Print("Task3: Gate Start\r\n");
+            break;
+
+        case 1: // 寻找门框
+            if (OpenMV_Data.target_valid) {
+                // 对准门中心
+                int16_t offset = OpenMV_Data.target_x;
+                if (offset > 20) {
+                    Motor_Turn(2000, 30);  // 右转
+                } else if (offset < -20) {
+                    Motor_Turn(2000, -30); // 左转
+                } else {
+                    Motor_GoStraight(2500);
+                    align_timer++;
+                    if (align_timer > 50) {  // 对准后前进
+                        gate_phase = 2;
+                        phase_timer = HAL_GetTick();
+                    }
+                }
+            } else {
+                // 未找到，缓慢前进搜索
+                Motor_GoStraight(1500);
+                align_timer = 0;
+            }
+
+            // 超时
+            if (HAL_GetTick() - phase_timer > 15000) {
+                gate_phase = 2;
+            }
+            break;
+
+        case 2: // 穿过门
+            OpenMV_SetMode(OPENMV_MODE_COLOR_DETECT);
+            Motor_GoStraight(2500);
+
+            // 检测红线停止
+            if (OpenMV_GetColor() == COLOR_RED) {
+                Motor_Stop();
+                gate_phase = 3;
+            }
+
+            // 超时保护
+            if (HAL_GetTick() - phase_timer > 5000) {
+                Motor_Stop();
+                gate_phase = 3;
+            }
+            break;
+
+        case 3: // 完成
+            gate_phase = 0;
+            align_timer = 0;
+            g_task_state = TASK_STATE_DONE;
+            Debug_Print("Task3: Complete - Patio1 Done!\r\n");
+            break;
     }
 }
 
@@ -393,31 +489,74 @@ static void Task_Patio1_Gate(void)
 static void Task_Patio2_ShapeMatch(void)
 {
     static uint8_t shape_phase = 0;
+    static uint32_t phase_timer = 0;
+    static Arrow_Direction detected_arrow = ARROW_NONE;
 
     switch (shape_phase) {
-        case 0: // 移动到方块区域
+        case 0: // 初始化，前进到方块区域
+            OpenMV_SetMode(OPENMV_MODE_LANE_FOLLOW);
+            Lane_SetBaseSpeed(2500);
+            Lane_Start();
+            phase_timer = HAL_GetTick();
+            shape_phase = 1;
+            Debug_Print("Task4: Shape Match Start\r\n");
             break;
 
-        case 1: // 识别箭头
-            {
-                Arrow_Direction arrow = OpenMV_GetArrow();
-                if (arrow == ARROW_LEFT) {
-                    Servo_SetAngle(SERVO_LEFT);
-                    Motor_GoStraight_ms(3000, 1500);
-                } else if (arrow == ARROW_RIGHT) {
-                    Servo_SetAngle(SERVO_RIGHT);
-                    Motor_GoStraight_ms(3000, 1500);
-                } else if (arrow == ARROW_STRAIGHT) {
-                    Servo_SetAngle(SERVO_CENTER);
-                    Motor_GoStraight_ms(3000, 1500);
-                }
+        case 1: // 移动到方块区域
+            Lane_Process();
+            // 检测到停止标记或超时
+            if (OpenMV_IsStopLine() || (HAL_GetTick() - phase_timer > 10000)) {
+                Lane_Stop();
+                Motor_Stop_ms(500);
                 shape_phase = 2;
+                phase_timer = HAL_GetTick();
             }
             break;
 
-        case 2: // 撞倒立牌
+        case 2: // 切换到箭头识别模式
+            OpenMV_SetMode(OPENMV_MODE_ARROW_DETECT);
+            shape_phase = 3;
+            break;
+
+        case 3: // 识别箭头
+            detected_arrow = OpenMV_GetArrow();
+            if (detected_arrow != ARROW_NONE) {
+                shape_phase = 4;
+                Debug_Print("Arrow detected\r\n");
+            }
+            // 超时，使用默认直行
+            if (HAL_GetTick() - phase_timer > 5000) {
+                detected_arrow = ARROW_STRAIGHT;
+                shape_phase = 4;
+            }
+            break;
+
+        case 4: // 根据箭头方向移动
+            Servo_SetAngle(SERVO_CENTER);
+            if (detected_arrow == ARROW_LEFT) {
+                // 左转到目标
+                Motor_Turn(3000, -50);
+                HAL_Delay(1500);
+                Motor_GoStraight_ms(3500, 2000);
+            } else if (detected_arrow == ARROW_RIGHT) {
+                // 右转到目标
+                Motor_Turn(3000, 50);
+                HAL_Delay(1500);
+                Motor_GoStraight_ms(3500, 2000);
+            } else {
+                // 直行到目标
+                Motor_GoStraight_ms(3500, 2500);
+            }
+            shape_phase = 5;
+            break;
+
+        case 5: // 撞倒立牌
+            Motor_GoStraight_ms(4000, 1000);
+            Motor_Stop_ms(500);
             shape_phase = 0;
+            detected_arrow = ARROW_NONE;
             g_task_state = TASK_P2_BALL_RELEASE;
+            Debug_Print("Task4: Complete\r\n");
             break;
     }
 }
@@ -428,17 +567,72 @@ static void Task_Patio2_ShapeMatch(void)
 static void Task_Patio2_BallRelease(void)
 {
     static uint8_t ball_phase = 0;
+    static uint32_t phase_timer = 0;
+    static uint32_t align_count = 0;
 
     switch (ball_phase) {
-        case 0: // 移动到释放点
+        case 0: // 初始化
+            OpenMV_SetMode(OPENMV_MODE_TARGET_FIND);
+            phase_timer = HAL_GetTick();
+            ball_phase = 1;
+            Debug_Print("Task5: Ball Release Start\r\n");
             break;
 
-        case 1: // 对准篮筐
+        case 1: // 移动到释放点，寻找篮筐
+            if (OpenMV_Data.target_valid) {
+                int16_t offset = OpenMV_Data.target_x;
+                if (offset > 15) {
+                    Motor_Turn(2000, 25);
+                    align_count = 0;
+                } else if (offset < -15) {
+                    Motor_Turn(2000, -25);
+                    align_count = 0;
+                } else {
+                    Motor_GoStraight(2000);
+                    align_count++;
+                }
+
+                // 对准且接近
+                if (align_count > 30) {
+                    ball_phase = 2;
+                    phase_timer = HAL_GetTick();
+                }
+            } else {
+                // 搜索篮筐
+                Motor_Spin(1500);
+            }
+
+            if (HAL_GetTick() - phase_timer > 20000) {
+                ball_phase = 2;
+            }
             break;
 
-        case 2: // 释放球
+        case 2: // 接近篮筐
+            Motor_GoStraight(2000);
+            // 使用超声波检测距离
+            if (SR_04.distance_filtered < 0.3f && SR_04.distance_filtered > 0.05f) {
+                Motor_Stop();
+                ball_phase = 3;
+            }
+            if (HAL_GetTick() - phase_timer > 5000) {
+                Motor_Stop();
+                ball_phase = 3;
+            }
+            break;
+
+        case 3: // 释放球 (控制舵机释放机构)
+            // 舵机动作释放球
+            Servo_SetAngle(45);   // 打开释放机构
+            HAL_Delay(1000);
+            Servo_SetAngle(90);   // 复位
+            ball_phase = 4;
+            break;
+
+        case 4: // 完成
             ball_phase = 0;
+            align_count = 0;
             g_task_state = TASK_P2_COMMUNICATION;
+            Debug_Print("Task5: Complete\r\n");
             break;
     }
 }
@@ -449,32 +643,65 @@ static void Task_Patio2_BallRelease(void)
 static void Task_Patio2_Communication(void)
 {
     static uint8_t comm_phase = 0;
+    static uint32_t phase_timer = 0;
+    static uint8_t retry_count = 0;
 
     switch (comm_phase) {
         case 0: // 移动到种植区
-            Motor_Stop();
+            OpenMV_SetMode(OPENMV_MODE_LANE_FOLLOW);
+            Lane_SetBaseSpeed(2500);
+            Lane_Start();
+            phase_timer = HAL_GetTick();
             comm_phase = 1;
+            Debug_Print("Task6: Communication Start\r\n");
             break;
 
-        case 1: // 发送数据
-            {
-                char msg[64];
-                sprintf(msg, "Team:Rover,Date:2024-XX-XX,Time:XX:XX:XX\r\n");
-                HAL_UART_Transmit(&huart3, (uint8_t*)msg, strlen(msg), 1000);
+        case 1: // 前进到种植区
+            Lane_Process();
+            if (OpenMV_IsStopLine() || (HAL_GetTick() - phase_timer > 10000)) {
+                Lane_Stop();
+                Motor_Stop_ms(500);
                 comm_phase = 2;
             }
             break;
 
-        case 2: // 等待确认
-            HAL_Delay(1000);
-            comm_phase = 3;
+        case 2: // 发送数据
+            {
+                char msg[64];
+                // 获取RTC时间 (如果有)
+                sprintf(msg, "Team:Rover,Date:2024-12-01,Time:12:00:00\r\n");
+                HAL_UART_Transmit(&huart3, (uint8_t*)msg, strlen(msg), 1000);
+                phase_timer = HAL_GetTick();
+                comm_phase = 3;
+                Debug_Print("HC-12 Data Sent\r\n");
+            }
             break;
 
-        case 3: // 移动到终点
-            Motor_GoStraight_ms(3000, 2000);
+        case 3: // 等待确认
+            // 检查UART3是否收到确认
+            // 简化处理：等待固定时间
+            if (HAL_GetTick() - phase_timer > 2000) {
+                if (retry_count < 3) {
+                    // 重试
+                    retry_count++;
+                    comm_phase = 2;
+                } else {
+                    comm_phase = 4;
+                }
+            }
+            break;
+
+        case 4: // 移动到终点
+            Motor_GoStraight_ms(3000, 3000);
             Motor_Stop();
+            comm_phase = 5;
+            break;
+
+        case 5: // 完成
             comm_phase = 0;
+            retry_count = 0;
             g_task_state = TASK_STATE_DONE;
+            Debug_Print("Task6: Complete - Patio2 Done!\r\n");
             break;
     }
 }
