@@ -20,7 +20,8 @@ void Motor_Init(void)
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 
     Motor_Stop();
-    Motor_State.enabled = 1;
+    // 使能电机驱动芯片
+    Motor_Enable();
 }
 
 /**
@@ -87,8 +88,9 @@ void Motor_Stop(void)
  */
 void Motor_Enable(void)
 {
+    // 拉高nSLEEP引脚使能电机驱动芯片
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_SET);
     Motor_State.enabled = 1;
-    // TODO: 控制DRV8837的nSLEEP引脚
 }
 
 /**
@@ -98,7 +100,8 @@ void Motor_Disable(void)
 {
     Motor_Stop();
     Motor_State.enabled = 0;
-    // TODO: 控制DRV8837的nSLEEP引脚
+    // 拉低nSLEEP引脚禁用电机驱动芯片（进入睡眠模式）
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
 }
 
 /**

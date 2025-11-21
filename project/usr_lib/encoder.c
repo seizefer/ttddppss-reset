@@ -30,9 +30,9 @@ void Encoder_Init(void)
     Encoder_Data.distance_right = 0;
     Encoder_Data.last_update = HAL_GetTick();
 
-    // 启动编码器定时器 (假设使用TIM3和TIM4)
-    // HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
-    // HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+    // 启动编码器定时器
+    HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
+    HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
 
     last_count_left = 0;
     last_count_right = 0;
@@ -49,13 +49,9 @@ void Encoder_Update(void)
 
     if (dt == 0) return;
 
-    // 读取当前计数 (假设使用TIM3和TIM4)
-    // int16_t count_left = (int16_t)__HAL_TIM_GET_COUNTER(&htim3);
-    // int16_t count_right = (int16_t)__HAL_TIM_GET_COUNTER(&htim4);
-
-    // 临时使用0 (需要根据实际硬件配置)
-    int16_t count_left = 0;
-    int16_t count_right = 0;
+    // 读取当前计数
+    int16_t count_left = (int16_t)__HAL_TIM_GET_COUNTER(&htim3);
+    int16_t count_right = (int16_t)__HAL_TIM_GET_COUNTER(&htim4);
 
     // 计算增量
     int32_t delta_left = count_left - last_count_left;
