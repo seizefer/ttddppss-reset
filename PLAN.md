@@ -1,72 +1,48 @@
-# Development Plan - Smart City Autonomous Rover
+# 开发计划
 
-## Current Phase: Foundation Development
+## 当前阶段：硬件基础
 
----
+### 阶段1：硬件驱动 ✓
+- [x] STM32F405 项目初始化
+- [x] 超声波传感器驱动（SR-04 + 卡尔曼滤波）
+- [x] 基础UART通信
+- [ ] 电机驱动（DRV8837 + PWM）
+- [ ] 舵机控制
 
-## Phase 1: Hardware Foundation (Current)
-- [x] STM32F405 project setup
-- [x] Ultrasonic sensor (SR-04) driver
-- [x] Kalman filter for distance
-- [x] Basic UART communication
-- [ ] Motor driver implementation (DRV8837)
-- [ ] PWM servo control
-- [ ] Power system integration
+### 阶段2：传感器集成
+- [ ] OpenMV摄像头通信
+- [ ] 轮速编码器
+- [ ] 转向角度反馈
+- [ ] 433MHz无线模块（HC-12）
 
-## Phase 2: Sensor Integration
-- [ ] OpenMV camera UART protocol
-- [ ] Wheel speed encoder reading
-- [ ] Steering angle feedback
-- [ ] Bluetooth module (HC-12 433MHz)
+### 阶段3：核心算法
+- [ ] 车道检测与跟踪
+- [ ] 电机PID控制
+- [ ] 路径跟随
+- [ ] 避障逻辑
 
-## Phase 3: Core Algorithms
-- [ ] Lane detection and tracking
-- [ ] PID controller for motor
-- [ ] Path following algorithm
-- [ ] Obstacle avoidance logic
-
-## Phase 4: Recognition Systems
-- [ ] Arrow shape recognition
-- [ ] Color recognition (signals)
-- [ ] Pedestrian detection
-- [ ] Gate detection
-
-## Phase 5: Task Implementation
-- [ ] Patio 1 Task 1: Lane tracking
-- [ ] Patio 1 Task 2: Bridge crossing
-- [ ] Patio 1 Task 3: Gate passage
-- [ ] Patio 2 Task 4: Arrow recognition
-- [ ] Patio 2 Task 5: Ball release
-- [ ] Patio 2 Task 6: Wireless communication
-
-## Phase 6: Integration & Testing
-- [ ] Data fusion module
-- [ ] State machine for task flow
-- [ ] Auto-transition between tasks
-- [ ] Full system testing
+### 阶段4：任务实现
+- [ ] 任务1：车道循迹
+- [ ] 任务2：过桥
+- [ ] 任务3：过门
+- [ ] 任务4：箭头识别
+- [ ] 任务5：投球
+- [ ] 任务6：无线通信
 
 ---
 
-## Immediate Next Steps
+## 优先级
 
-### Priority 1 (Critical)
-1. Implement motor control (PWM + DRV8837)
-2. Add PID controller for speed/steering
-3. Setup OpenMV communication protocol
+**高优先级**
+1. 电机PWM控制
+2. PID控制器
+3. OpenMV通信协议
 
-### Priority 2 (Important)
-4. Lane detection algorithm
-5. Basic path following
-6. Obstacle avoidance with ultrasonic
+**中优先级**
+4. 车道检测
+5. 基础路径跟随
+6. 超声波避障
 
-### Priority 3 (Enhancement)
-7. Arrow/color recognition
-8. Communication module
-9. Task state machine
-
----
-
-## Notes
-- Update this file after each development session
-- Mark completed items with [x]
-- Add new tasks as discovered
+**低优先级**
+7. 箭头/颜色识别
+8. 任务状态机
