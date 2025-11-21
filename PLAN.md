@@ -1,72 +1,72 @@
-# Development Plan - Smart City Autonomous Rover
+# 开发计划 - 智能城市自主小车
 
-## Current Phase: Foundation Development
-
----
-
-## Phase 1: Hardware Foundation (Current)
-- [x] STM32F405 project setup
-- [x] Ultrasonic sensor (SR-04) driver
-- [x] Kalman filter for distance
-- [x] Basic UART communication
-- [ ] Motor driver implementation (DRV8837)
-- [ ] PWM servo control
-- [ ] Power system integration
-
-## Phase 2: Sensor Integration
-- [ ] OpenMV camera UART protocol
-- [ ] Wheel speed encoder reading
-- [ ] Steering angle feedback
-- [ ] Bluetooth module (HC-12 433MHz)
-
-## Phase 3: Core Algorithms
-- [ ] Lane detection and tracking
-- [ ] PID controller for motor
-- [ ] Path following algorithm
-- [ ] Obstacle avoidance logic
-
-## Phase 4: Recognition Systems
-- [ ] Arrow shape recognition
-- [ ] Color recognition (signals)
-- [ ] Pedestrian detection
-- [ ] Gate detection
-
-## Phase 5: Task Implementation
-- [ ] Patio 1 Task 1: Lane tracking
-- [ ] Patio 1 Task 2: Bridge crossing
-- [ ] Patio 1 Task 3: Gate passage
-- [ ] Patio 2 Task 4: Arrow recognition
-- [ ] Patio 2 Task 5: Ball release
-- [ ] Patio 2 Task 6: Wireless communication
-
-## Phase 6: Integration & Testing
-- [ ] Data fusion module
-- [ ] State machine for task flow
-- [ ] Auto-transition between tasks
-- [ ] Full system testing
+## 当前阶段：基础开发
 
 ---
 
-## Immediate Next Steps
+## 阶段1：硬件基础（当前）
+- [x] STM32F405 项目初始化
+- [x] 超声波传感器（SR-04）驱动
+- [x] 距离卡尔曼滤波
+- [x] 基础UART通信
+- [ ] 电机驱动实现（DRV8837）
+- [ ] PWM舵机控制
+- [ ] 电源系统集成
 
-### Priority 1 (Critical)
-1. Implement motor control (PWM + DRV8837)
-2. Add PID controller for speed/steering
-3. Setup OpenMV communication protocol
+## 阶段2：传感器集成
+- [ ] OpenMV摄像头UART协议
+- [ ] 轮速编码器读取
+- [ ] 转向角度反馈
+- [ ] 蓝牙模块（HC-12 433MHz）
 
-### Priority 2 (Important)
-4. Lane detection algorithm
-5. Basic path following
-6. Obstacle avoidance with ultrasonic
+## 阶段3：核心算法
+- [ ] 车道检测与跟踪
+- [ ] 电机PID控制器
+- [ ] 路径跟随算法
+- [ ] 避障逻辑
 
-### Priority 3 (Enhancement)
-7. Arrow/color recognition
-8. Communication module
-9. Task state machine
+## 阶段4：识别系统
+- [ ] 箭头形状识别
+- [ ] 颜色识别（信号灯）
+- [ ] 行人检测
+- [ ] 门检测
+
+## 阶段5：任务实现
+- [ ] 庭院1 任务1：车道循迹
+- [ ] 庭院1 任务2：过桥
+- [ ] 庭院1 任务3：过门
+- [ ] 庭院2 任务4：箭头识别
+- [ ] 庭院2 任务5：投球
+- [ ] 庭院2 任务6：无线通信
+
+## 阶段6：集成测试
+- [ ] 数据融合模块
+- [ ] 任务流程状态机
+- [ ] 任务自动切换
+- [ ] 全系统测试
 
 ---
 
-## Notes
-- Update this file after each development session
-- Mark completed items with [x]
-- Add new tasks as discovered
+## 下一步工作
+
+### 优先级1（紧急）
+1. 实现电机控制（PWM + DRV8837）
+2. 添加速度/转向PID控制器
+3. 搭建OpenMV通信协议
+
+### 优先级2（重要）
+4. 车道检测算法
+5. 基础路径跟随
+6. 超声波避障
+
+### 优先级3（增强）
+7. 箭头/颜色识别
+8. 通信模块
+9. 任务状态机
+
+---
+
+## 备注
+- 每次开发后更新此文件
+- 完成的项目用 [x] 标记
+- 发现新任务时添加
