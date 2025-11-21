@@ -1,100 +1,98 @@
-# 智能城市自主小车 - 需求文档
+# Smart City Autonomous Rover - Requirements Document
 
-## 1. 项目概述
+## 1. Project Overview
 
-**项目类型：** 四轮自主小车，用于智能城市环境
-**预算限制：** 最高 1000 元人民币
-**主控芯片：** STM32F405RGT6 (LQFP64, Cortex-M4)
+**Project Type:** Four-wheeled autonomous rover for smart city environment
+**Budget:** 1000 RMB maximum
+**MCU:** STM32F405RGT6 (LQFP64, Cortex-M4)
 
-## 2. 核心任务（共6项）
+## 2. Core Tasks (6 Total)
 
-### 庭院1 - 地形导航
+### Patio 1 - Terrain Navigation
+| Task | Description | Key Requirements |
+|------|-------------|------------------|
+| 1. Lane Tracking | Follow colored path (50cm width) through curves | Color detection, path following |
+| 2. Bridge Crossing | Cross 45cm wide, 2.2m long bridge with wire mesh | Traction control, stability |
+| 3. Gate Passage | Pass through gate (50cm H x 50cm W), stop at red line | Gate detection, precise stopping |
 
-| 任务 | 描述 | 关键要求 |
-|------|------|----------|
-| 任务1: 车道循迹 | 沿彩色路径（50cm宽）通过弯道行驶 | 颜色检测、路径跟随 |
-| 任务2: 过桥 | 通过宽45cm、长2.2m的铁丝网桥 | 牵引力控制、稳定性 |
-| 任务3: 过门 | 通过门（高50cm x 宽50cm），在红线处停止 | 门检测、精确停车 |
+### Patio 2 - Recognition & Interaction
+| Task | Description | Key Requirements |
+|------|-------------|------------------|
+| 4. Arrow Recognition | Identify arrow shapes, knock down corresponding sign | Shape recognition, path planning |
+| 5. Ball Release | Carry ping pong ball to fence, drop into 25cm basket | Positioning, release mechanism |
+| 6. Wireless Communication | Send team info via 433MHz HC-12 module | Bluetooth/RF communication |
 
-### 庭院2 - 识别与交互
+## 3. Hardware Requirements
 
-| 任务 | 描述 | 关键要求 |
-|------|------|----------|
-| 任务4: 箭头识别 | 识别箭头形状，撞倒对应标志 | 形状识别、路径规划 |
-| 任务5: 投球 | 携带乒乓球到围栏处，投入25cm篮筐 | 定位、释放机构 |
-| 任务6: 无线通信 | 通过433MHz HC-12模块发送队伍信息 | 蓝牙/射频通信 |
+### Sensors
+- **Camera:** OpenMV (image capturing, lane detection, recognition)
+- **Ultrasonic:** SR-04 (obstacle detection)
+- **Feedback:** Wheel speed sensor, steering angle sensor
+- **Communication:** 433MHz HC-12, Bluetooth module
 
-## 3. 硬件要求
+### Power System
+- 12V to 5V: TPS5430 DCDC (for OpenMV, max 3A)
+- 5V to 3.3V: LP5907 LDO (for MCU, low ripple)
+- Motor supply: TPS5430 to 7-10V
 
-### 传感器
-- **摄像头：** OpenMV（图像采集、车道检测、目标识别）
-- **超声波：** SR-04（障碍物检测）
-- **反馈传感器：** 轮速传感器、转向角度传感器
-- **通信模块：** 433MHz HC-12、蓝牙模块
+### Motor Driver
+- Chip: DRV8837 (built-in MOSFETs, 1.8A output)
+- Custom PCB required (no breadboards)
 
-### 电源系统
-- 12V转5V: TPS5430 DCDC（用于OpenMV，最大3A）
-- 5V转3.3V: LP5907 LDO（用于MCU，低纹波）
-- 电机供电: TPS5430转7-10V
+### Safety
+- Fuse and ON-OFF switch between battery and system
+- Maximum 2 beacons allowed for navigation
 
-### 电机驱动
-- 芯片: DRV8837（内置MOSFET，1.8A输出）
-- 需要定制PCB（禁止使用面包板）
+## 4. Software Modules Required
 
-### 安全要求
-- 电池与系统之间需要保险丝和电源开关
-- 最多允许使用2个信标进行导航
+### Data Collection
+- Camera image capturing
+- Ultrasonic distance measurement
+- Wheel speed/angle feedback
+- Wireless data reception
 
-## 4. 软件模块需求
+### Processing & Recognition
+- Lane detection and tracking
+- Arrow recognition (left/straight/right)
+- Color recognition (signals)
+- Pedestrian detection
+- Obstacle detection
 
-### 数据采集
-- 摄像头图像采集
-- 超声波距离测量
-- 轮速/角度反馈
-- 无线数据接收
+### Decision & Control
+- Path planning
+- Behavior decision
+- Motion planning
+- Data fusion
+- Steering message generation
 
-### 处理与识别
-- 车道检测与跟踪
-- 箭头识别（左/直/右）
-- 颜色识别（信号灯）
-- 行人检测
-- 障碍物检测
+### Communication
+- UART (OpenMV, Bluetooth)
+- 433MHz wireless transmission
+- Real-time feedback
 
-### 决策与控制
-- 路径规划
-- 行为决策
-- 运动规划
-- 数据融合
-- 转向指令生成
+## 5. Deliverables
 
-### 通信接口
-- UART（OpenMV、蓝牙）
-- 433MHz无线传输
-- 实时反馈
+1. **Initial Design Report** - System design, sensor justification (1500 words, 3 pages max)
+2. **Laboratory Notebook** - Chronological development record
+3. **Final Report** - Team + individual reports, BOM included
+4. **Presentation** - 25min PPT + 10min Q&A
+5. **Demo Video** - 2 minutes max for non-live patio
 
-## 5. 交付物
+## 6. Constraints
 
-1. **初步设计报告** - 系统设计、传感器选型说明（1500字，最多3页）
-2. **实验室笔记本** - 按时间顺序记录开发过程
-3. **最终报告** - 团队报告+个人报告，包含BOM清单
-4. **演示答辩** - 25分钟PPT + 10分钟问答
-5. **演示视频** - 非现场庭院最长2分钟
+- Fully autonomous (pre-programmed, no real-time control transmission)
+- Wire connections must be soldered (no breadboards)
+- Custom motor driver PCB required
+- 12 minutes max for on-site demo
+- Tasks must auto-transition (manual reset = score deduction)
 
-## 6. 约束条件
+## 7. Communication Interfaces
 
-- 完全自主运行（预编程，禁止实时遥控）
-- 导线连接必须焊接（禁止使用面包板）
-- 必须使用定制电机驱动PCB
-- 现场演示最长12分钟
-- 任务必须自动切换（手动重置将扣分）
-
-## 7. 通信接口分配
-
-| 接口 | 用途 |
-|------|------|
-| UART1 | 调试输出 |
-| UART2 | OpenMV通信 |
-| UART3 | 蓝牙模块 |
-| PWM | 舵机控制 |
-| GPIO | 电机驱动、超声波触发 |
-| EXTI | 超声波回波 |
+| Interface | Purpose |
+|-----------|---------|
+| UART1 | Debug output |
+| UART2 | OpenMV communication |
+| UART3 | Bluetooth module |
+| PWM | Servo control |
+| GPIO | Motor driver, ultrasonic trigger |
+| EXTI | Ultrasonic echo |
